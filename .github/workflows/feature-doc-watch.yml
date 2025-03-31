@@ -1,0 +1,29 @@
+# .github/workflows/feature-doc-watch.yml
+
+name: 📌 Watch for Feature Doc Changes
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'docs/feature-tracking.ts'
+      - 'docs/working-with-chatgpt.md'
+
+jobs:
+  notify-chatgpt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: 🔍 Log File Change Info
+        run: |
+          echo "Feature tracking docs have changed!"
+          echo "Commit by: ${{ github.actor }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Message: ${{ github.event.head_commit.message }}"
+
+      # Optional: send webhook or email, integrate with external notification system
+      # You could hook this into a Slack webhook or Discord bot to ping your team
+      # or use it to eventually ping a local ChatGPT plugin in the future.
