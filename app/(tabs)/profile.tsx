@@ -1,3 +1,4 @@
+import { GuestImportCard } from "../../components/GuestImportCard";
 import { useState } from "react";
 import { Text } from "react-native";
 import { useRouter } from "expo-router";
@@ -59,17 +60,23 @@ export default function ProfileScreen() {
             : "Your progress is saved on this device. You can train and complete Daily without an account."}
         </Text>
         <Text style={styles.muted}>
-          Guest and account progress are separate. Signing out restores your
-          device’s guest profile. Uninstalling or clearing app data removes
-          guest progress.
+          Guest completions stay on this device unless you explicitly import
+          them into your account below. Signing out restores your device’s guest
+          profile. Uninstalling or clearing app data removes guest progress.
         </Text>
       </Card>
       {user ? (
         <>
+          <GuestImportCard key={id} />
           <Button
             title={busy ? "Working…" : "Sign out"}
             secondary
-            disabled={busy || syncing || data.pending.length > 0}
+            disabled={
+              busy ||
+              syncing ||
+              data.pending.length > 0 ||
+              data.guestImport?.status === "pending"
+            }
             onPress={() => {
               void accountAction(false);
             }}

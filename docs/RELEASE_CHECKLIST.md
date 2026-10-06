@@ -31,6 +31,8 @@ Repository validation is documented in `VALIDATION.md`. This checklist covers ex
 - [ ] Complete Daily incorrectly/correctly on separate days; revisiting/relaunching cannot replay today's submission. Midnight refresh yields the new puzzle, including timezone travel behavior.
 - [ ] Refresh/reopen Score; XP remains unchanged. Deep-link to Score with no result shows a useful fallback.
 - [ ] Airplane mode: complete training/Daily, reconnect and Sync, verify cloud totals. Verify conflicting Daily across two devices rewards once.
+- [ ] Sign up from a played guest profile, confirm email, then explicitly import. Verify original IDs, completion-derived totals, visible queued/confirmed states and logout restoring the unchanged guest copy.
+- [ ] Merge into an existing account with Daily-date/ID conflicts: review counts, keep account results, and verify choosing not to import changes nothing. Interrupt an import after a partial upload, restart/reconnect, and confirm retries cannot reward twice.
 - [ ] Delete a test account; cloud records and cached account data disappear, and guest play remains available.
 
 ## Product/legal/store materials

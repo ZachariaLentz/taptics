@@ -54,7 +54,8 @@ async function record(
 }
 await asUser(alice);
 await record(trainingId);
-await record(trainingId);
+// A replay cannot change the original score or award another reward.
+await record(trainingId, "training", 0);
 assert.equal(
   (await db.query("select * from public.training_sessions")).rows.length,
   1,
@@ -63,6 +64,16 @@ let profile = (await db.query("select * from public.profiles")).rows[0];
 assert.equal(profile.xp, 120);
 assert.equal(profile.level, 2);
 assert.equal(profile.streak, 1);
+assert.equal(
+  (await db.query("select correct, user_id from public.training_sessions"))
+    .rows[0].correct,
+  10,
+);
+assert.equal(
+  (await db.query("select user_id from public.training_sessions")).rows[0]
+    .user_id,
+  alice,
+);
 await assert.rejects(
   record("10000000-0000-4000-8000-000000000003", "training", 10, today, 3),
   /Invalid training result/,
@@ -116,6 +127,57 @@ await assert.rejects(
   ),
   /permission denied/,
 );
+// No actor parameter can be supplied to either public mutation RPC.
+const args = (
+  await db.query(
+    "select proname, pronargs, proargnames from pg_proc where pronamespace='public'::regnamespace and proname in ('record_completion','delete_my_account')",
+  )
+).rows;
+assert.equal(
+  args.find((row) => row.proname === "delete_my_account").pronargs,
+  0,
+);
+assert.equal(
+  args.find((row) => row.proname === "record_completion").pronargs,
+  8,
+);
+assert.ok(
+  !args
+    .find((row) => row.proname === "record_completion")
+    .proargnames.some((name) => /user|actor/.test(name)),
+);
+await assert.rejects(
+  db.query("select public.delete_my_account($1::uuid)", [bob]),
+  /does not exist/,
+);
+for (const table of ["profiles", "training_sessions", "daily_completions"]) {
+  for (const statement of [
+    `update public.${table} set ${table === "profiles" ? "xp=99999" : "user_id=user_id"}`,
+    `delete from public.${table}`,
+  ]) {
+    await assert.rejects(db.query(statement), /permission denied/);
+  }
+}
+await assert.rejects(
+  db.query("insert into public.profiles(id,xp) values ($1,99999)", [bob]),
+  /permission denied/,
+);
+await assert.rejects(
+  db.query(
+    "insert into public.daily_completions(id,user_id,played_on,correct,selected,puzzle) values ($1,$2,$3,true,3,$4)",
+    ["30000000-0000-4000-8000-000000000002", bob, today, puzzle],
+  ),
+  /permission denied/,
+);
+await db.exec("reset role");
+// Verify the Daily constraint independently of RPC serialization, even for a database owner.
+await assert.rejects(
+  db.query(
+    "insert into public.daily_completions(id,user_id,played_on,correct,selected,puzzle) values ($1,$2,$3,true,3,$4)",
+    ["30000000-0000-4000-8000-000000000003", alice, today, puzzle],
+  ),
+  /duplicate key/,
+);
 await asUser(bob);
 assert.equal((await db.query("select * from public.profiles")).rows.length, 0);
 assert.equal(
@@ -133,8 +195,16 @@ await assert.rejects(
   record("10000000-0000-4000-8000-000000000005"),
   /permission denied/,
 );
+await assert.rejects(
+  db.query("select public.delete_my_account()"),
+  /permission denied/,
+);
 await asUser(alice);
 await db.query("select public.delete_my_account()");
+await assert.rejects(
+  record("10000000-0000-4000-8000-000000000009"),
+  /Authentication required/,
+);
 assert.equal(
   (await db.query("select * from public.training_sessions")).rows.length,
   0,
@@ -151,6 +221,19 @@ assert.equal(
     ])
   ).rows.length,
   0,
+);
+assert.equal(
+  (await db.query("select * from auth.users where id=$1", [bob])).rows.length,
+  1,
+);
+assert.equal(
+  (
+    await db.query(
+      "select correct from public.training_sessions where user_id=$1",
+      [bob],
+    )
+  ).rows[0].correct,
+  6,
 );
 await db.close();
 console.log(

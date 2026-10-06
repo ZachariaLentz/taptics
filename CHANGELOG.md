@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.0.0] - 2026-10-06
 
 ### Changed
+- Added explicit reviewed guest-to-account completion import, durable retry/confirmation receipts, deterministic conflicts and unchanged guest restoration on logout.
+- Reconfirmed database ownership/write/idempotency guarantees with expanded regression tests.
 - Repaired guest/session boot and separated four user tabs from Flash/results/login.
 - Added deterministic progressive arithmetic, sequential Flash terms, ten-answer scoring and locked feedback.
 - Persisted Daily completion and completion-based XP/streak/history; added real Progress and account controls.

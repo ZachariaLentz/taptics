@@ -14,7 +14,7 @@ The repository had no `AGENTS.md`. Routes, source, package/lock versions, docs, 
 
 Major findings: nonexistent group-index redirects; duplicated admin/user routes; components treated as routes; transient gameplay/results in tabs; ignored player level; level-1 generation; executable formula evaluation; incorrect reduction starting at zero; entire expressions displayed; stale scoring and premature round-ten navigation; duplicate answer/reward paths; inconsistent Daily profile columns; non-deterministic choices; result navigation without required state; placeholder Progress; hardcoded deployment configuration; missing schema/RLS; incorrect README feature/setup claims.
 
-## Final checks
+## Initial v1 checks
 
 Completed in the supplied Linux environment (Node 24.19.0/npm 11.9.0; CI selects Node 22 LTS):
 
@@ -37,3 +37,26 @@ Environment-specific prefixes: `__UNSAFE_EXPO_HOME_DIRECTORY=/tmp/taptics-expo`,
 The browser smoke used Chromium with a 390×844 viewport and actual generated options; it independently counted visible correct feedback and matched the saved final score after ten accepted answers, then reloaded the stored result and Daily completion. The app's completion state is local-first. No configured Taptics backend was available in the connected Supabase project list, so production Auth/PostgREST and two-device cloud integration were not tested or deployed.
 
 JavaScript/Hermes export does not prove a signed native binary compiles or that sound/haptics are correct on physical devices. Native signing/toolchain compatibility, deployed-account integration, store materials and device acceptance remain on `RELEASE_CHECKLIST.md`. Release classification: **development-ready**, not yet beta/TestFlight-ready or store-submission-ready.
+
+## Final pre-merge pass
+
+Started from `d8acaf6` on the same `codex/finish-taptics-v1` branch. The deterministic engine, completion-based progression, existing schema/atomic award RPC/RLS, navigation and offline queue were preserved. Added an explicit, reviewed guest-completion merge and durable pending/confirmed import receipts; no aggregate XP/level/streak copying and no new schema migration.
+
+The full requested suite was rerun after the changes:
+
+| Command | Result |
+| --- | --- |
+| `npm ci` | Passed clean install (1,353 packages; writable npm cache) |
+| `npx expo-doctor` | Passed 18/18 checks |
+| `npx tsc --noEmit` | Passed |
+| `npm run lint` | Passed, zero warnings |
+| `npx jest --runInBand` | Passed 9 suites / 37 tests |
+| `npm run test:database` | Passed expanded security regression checks |
+| `npx expo export --platform web` | Passed |
+| `npx expo export --platform ios --platform android --output-dir /tmp/taptics-premerge-native` | Passed both native/Hermes exports |
+
+New tests cover new/existing-account import, explicit consent/decline, duplicate IDs/Daily dates, deterministic conflict precedence, stale review, date/prerequisite disclosures, partial upload, offline restart, lost acknowledgements, idempotent retry, foreign-owned UUID remapping, account-switch invalidation, concurrent server Daily completion, failed local persistence, cloud-confirmed wording and restoration of the unchanged guest profile on logout. RPC uploads are exercised through the provider with a controlled backend; the real migration is exercised in PostgreSQL/PGlite.
+
+The security regression additionally confirms no actor/user parameter is accepted by either RPC, account deletion accepts no arguments, every direct client INSERT/UPDATE/DELETE is denied, Daily uniqueness holds even outside the RPC, a training UUID retry cannot change its score or XP, deleting one user preserves the other, and a deleted user's old identity cannot award new results. No client table-write path or profile/XP UPDATE was reintroduced. Anti-cheat for self-reported scores remains explicitly outside this personal-practice MVP.
+
+Live email-confirmation/Auth/PostgREST and physical-device import acceptance still require Zach's deployed Taptics backend and devices. The release checklist now includes guest-import and interrupted-upload acceptance. Environment cache/proxy overrides are unchanged from the initial validation.

@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Completion, mergeCompletions } from "./engine";
+import type { GuestImportReceipt } from "./guestImport";
 export interface PlayerData {
+  guestImport?: GuestImportReceipt;
   events: Completion[];
   pending: string[];
 }
@@ -29,6 +31,7 @@ export function addCompletion(data: PlayerData, event: Completion): PlayerData {
   )
     return data;
   return {
+    ...data,
     events: mergeCompletions(data.events, [event]),
     pending: [...data.pending, event.id],
   };

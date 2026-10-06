@@ -1,3 +1,4 @@
+import { GuestImportCard } from "../components/GuestImportCard";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { usePlayer } from "../lib/PlayerProvider";
@@ -54,6 +55,7 @@ export default function HomeScreen() {
           onPress={() => router.push("/daily")}
         />
       </Card>
+      <GuestImportCard key={user?.id ?? "guest"} />
       <SyncStatus />
     </Screen>
   );

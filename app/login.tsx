@@ -41,7 +41,7 @@ export default function LoginScreen() {
       if (response.data.session) router.replace("/profile");
       else
         setMessage(
-          "Check your email to confirm your account, then return here to log in.",
+          "Check your email to confirm your account, then log in to review importing your guest progress. Your guest copy stays on this device.",
         );
     } catch (e) {
       setMessage(
@@ -82,8 +82,9 @@ export default function LoginScreen() {
           {mode === "login" ? "Welcome back." : "Save your progress."}
         </Title>
         <Text style={styles.muted}>
-          Accounts sync across devices. Your guest progress stays separate on
-          this device.
+          After signing in, you can review and choose to import this device’s
+          guest completions. Nothing is imported automatically. Only
+          cloud-confirmed results are available across devices.
         </Text>
         <Card>
           <Text style={styles.text}>Email</Text>
