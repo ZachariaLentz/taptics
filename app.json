@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "ArithmeticTrainerApp",
-    "slug": "ArithmeticTrainerApp",
+    "name": "Taptics",
+    "slug": "taptics",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "taptics",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -30,7 +30,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#F3F5FF"
         }
       ]
     ],

@@ -1,1 +1,1 @@
-export { default } from '@/components/DailyScreen';
+export { default } from "../../screens/DailyScreen";

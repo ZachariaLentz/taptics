@@ -1,154 +1,160 @@
-import React, { useState } from 'react';
+import { useRef, useState } from "react";
+import { KeyboardAvoidingView, Platform, Text, TextInput } from "react-native";
+import { useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  TextInput,
   Button,
-  StyleSheet,
-  Alert,
-  Keyboard,
-  TouchableWithoutFeedback
-} from 'react-native';
-import { supabase } from '@lib/supabase';
-import { useRouter } from 'expo-router';
-
+  Card,
+  Feedback,
+  Screen,
+  styles,
+  Title,
+} from "../components/ui";
+import { supabase } from "../lib/supabase";
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
-
-  const handleLogin = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      Alert.alert('Login Error', error.message);
-    } else {
-      router.replace('/profile');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const locked = useRef(false);
+  const submit = async () => {
+    if (!supabase || locked.current) return;
+    if (!email.trim().includes("@") || password.length < 8) {
+      setMessage(
+        "Enter a valid email and a password with at least 8 characters.",
+      );
+      return;
+    }
+    locked.current = true;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response =
+        mode === "login"
+          ? await supabase.auth.signInWithPassword({
+              email: email.trim(),
+              password,
+            })
+          : await supabase.auth.signUp({ email: email.trim(), password });
+      if (response.error) throw response.error;
+      if (response.data.session) router.replace("/profile");
+      else
+        setMessage(
+          "Check your email to confirm your account, then return here to log in.",
+        );
+    } catch (e) {
+      setMessage(
+        e instanceof Error ? e.message : "Could not connect. Please retry.",
+      );
+    } finally {
+      locked.current = false;
+      setBusy(false);
     }
   };
-
-  const handleSignUp = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) {
-      if (error.message.includes('already registered')) {
-        Alert.alert('Account Exists', 'This email is already registered. Try logging in.');
-      } else {
-        Alert.alert('Signup Error', error.message);
-      }
-    } else {
-      Alert.alert('Success', 'Check your email to confirm sign-up.');
+  const reset = async () => {
+    if (!supabase || locked.current || !email.trim().includes("@")) {
+      setMessage("Enter your email first.");
+      return;
+    }
+    locked.current = true;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) throw error;
+      setMessage(
+        "If an account exists, a reset email is on its way. Follow the configured account recovery page.",
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Reset request failed.");
+    } finally {
+      locked.current = false;
+      setBusy(false);
     }
   };
-
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-    if (error) {
-      Alert.alert('Google Login Error', error.message);
-    }
-  };
-
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Welcome to Taptics</Text>
-
-        <View style={styles.toggleRow}>
-          <Button
-            title="Login"
-            onPress={() => setMode('login')}
-            color={mode === 'login' ? '#007aff' : '#aaa'}
-          />
-          <Button
-            title="Sign Up"
-            onPress={() => setMode('signup')}
-            color={mode === 'signup' ? '#007aff' : '#aaa'}
-          />
-        </View>
-
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Screen>
+        <Title>
+          {mode === "login" ? "Welcome back." : "Save your progress."}
+        </Title>
+        <Text style={styles.muted}>
+          Accounts sync across devices. Your guest progress stays separate on
+          this device.
+        </Text>
+        <Card>
+          <Text style={styles.text}>Email</Text>
           <TextInput
+            accessibilityLabel="Email"
             style={styles.input}
-            placeholder="Enter your email"
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
+            autoComplete="email"
             value={email}
             onChangeText={setEmail}
+            editable={!busy}
           />
-        </View>
-
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.text}>Password (8+ characters)</Text>
           <TextInput
+            accessibilityLabel="Password"
             style={styles.input}
-            placeholder="Enter your password"
             secureTextEntry
+            autoComplete={
+              mode === "login" ? "current-password" : "new-password"
+            }
             value={password}
             onChangeText={setPassword}
+            editable={!busy}
           />
-        </View>
-
-        <View style={styles.buttonGroup}>
-          {mode === 'login' ? (
-            <Button title="Login" onPress={handleLogin} disabled={loading} />
-          ) : (
-            <Button title="Create Account" onPress={handleSignUp} disabled={loading} />
+          <Button
+            title={
+              busy
+                ? "Connecting…"
+                : mode === "login"
+                  ? "Log in"
+                  : "Create account"
+            }
+            disabled={busy || !supabase}
+            onPress={() => {
+              void submit();
+            }}
+          />
+          <Button
+            secondary
+            title={
+              mode === "login"
+                ? "Create an account instead"
+                : "Already have an account? Log in"
+            }
+            disabled={busy}
+            onPress={() => {
+              setMode(mode === "login" ? "signup" : "login");
+              setMessage("");
+            }}
+          />
+          {mode === "login" && (
+            <Button
+              title="Send password reset email"
+              secondary
+              disabled={busy || !supabase}
+              onPress={() => {
+                void reset();
+              }}
+            />
           )}
-        </View>
-
-        <View style={styles.separator} />
-
-        <Button title="Continue with Google" onPress={handleGoogleLogin} />
-      </View>
-    </TouchableWithoutFeedback>
+        </Card>
+        {message && <Feedback>{message}</Feedback>}
+        <Button
+          title="Continue as guest"
+          secondary
+          disabled={busy}
+          onPress={() => router.replace("/home")}
+        />
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#fff'
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center'
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20
-  },
-  fieldGroup: {
-    marginBottom: 15
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 4,
-    marginLeft: 4
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 16
-  },
-  buttonGroup: {
-    marginTop: 10,
-    marginBottom: 20
-  },
-  separator: {
-    marginVertical: 20,
-    borderBottomColor: '#ccc',
-    borderBottomWidth: StyleSheet.hairlineWidth
-  }
-});
