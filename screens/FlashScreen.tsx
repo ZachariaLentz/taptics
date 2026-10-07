@@ -44,7 +44,9 @@ export default function FlashScreen() {
   const advancing = useRef(false);
   const sounds = useSoundEffects();
   const feedbackRef = useRef(sounds);
-  feedbackRef.current = sounds;
+  useEffect(() => {
+    feedbackRef.current = sounds;
+  }, [sounds]);
   const [puzzles] = useState(() =>
     Array.from({ length: ROUND_COUNT }, (_, i) =>
       generatePuzzle(session.level, `${session.id}:${i}`),

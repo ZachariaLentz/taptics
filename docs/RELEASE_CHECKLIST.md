@@ -4,11 +4,10 @@ Repository validation is documented in `VALIDATION.md`. This checklist covers ex
 
 ## Backend and authentication
 
-- [ ] Create/select the production Taptics Supabase project. The connected account available during implementation did not expose a Taptics project; no live schema was changed.
-- [ ] Back up any prototype database. Review required legacy profile columns/custom triggers and the legacy-data notes in `supabase/README.md` before applying the migration.
-- [ ] Run `supabase login`, `supabase link --project-ref YOUR_PROJECT_REF`, then `supabase db push` (or execute the checked-in migration once in SQL editor).
-- [ ] Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in local/EAS build environments. These are public client values. Keep service-role credentials out of builds.
-- [ ] Enable email/password auth, confirmation, production SMTP and rate limits. Configure Site URL, confirmation URLs and a hosted password-recovery page. Test reset email through that page; the app currently requests reset mail but does not contain a recovery callback screen.
+- [x] Production Taptics Supabase backend created and the checked-in v1 migration deployed (reported by Zach). This SDK/auth pass does not change the schema.
+- [ ] Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in local/EAS environments. These are public client values; `.env.example` stays blank.
+- [ ] Enable email/password auth, confirmation, production SMTP and rate limits. Set Site URL `taptics://auth/confirm`; allow exact redirects `taptics://auth/confirm` and `taptics://auth/recovery`. Keep email template links on `{{ .ConfirmationURL }}`; see `supabase/README.md`.
+- [ ] On the installed iPhone app, sign up, open the confirmation email, return with a session, log out/log in, request reset, open its link and save a new password. Test cold launch, foreground, expired/replayed links and an account switch while recovery is open. Request/open PKCE links on the same installation.
 - [ ] Confirm the `public` schema is exposed to Data API. Run Supabase Security/Performance Advisors; verify only private reads and award/delete RPCs are granted to authenticated clients.
 - [ ] Test two separate accounts: neither can read the other's completions/profile or directly write reward tables. Verify account deletion removes data and the user cannot award again with an old token.
 - [ ] Verify two-device offline Daily conflict resolution, queued Flash uploads, login/confirmation/logout, expired session refresh and reconnect behavior against deployed Supabase.
@@ -16,10 +15,12 @@ Repository validation is documented in `VALIDATION.md`. This checklist covers ex
 ## Native build and store accounts
 
 - [ ] Reserve final bundle/package identifiers and set `expo.ios.bundleIdentifier` and `expo.android.package` in `app.json`. Identifiers are intentionally not assigned to an unverified developer account.
-- [ ] Log in to Expo/EAS and run `npx eas-cli init` to bind Zach's project. `eas.json` includes internal-preview and production profiles; no EAS project ID or signing credentials are fabricated.
-- [ ] Before store builds, check the current Apple Xcode/iOS SDK and Google target API requirements with Zach's build account. SDK 52 was retained and patched because local build/export validation succeeds; it is older than current Expo Go and may require an Expo SDK upgrade for current store toolchains. Choose the smallest supported SDK for the actual EAS image, then rerun the full suite. Do not submit based only on JavaScript bundle export.
+- [ ] Use Node 22 LTS (22.23.1 recommended). Log in with `npx eas-cli login`, then `npx eas-cli init` to link Zach's actual Expo project. Commit the resulting real `extra.eas.projectId`/owner configuration if appropriate. No project ID or signing credentials are fabricated.
+- [ ] In EAS, configure the public URL and publishable key for the `development`, `preview` and `production` environments used by `eas.json`. Use plaintext/sensitive visibility as appropriate; these values are bundled in the client. Never configure a backend secret/service-role key.
+- [ ] EAS profiles include a development client/internal distribution, standalone internal preview and production store build. iOS profiles pin documented `macos-tahoe-26.5-xcode-26.6` (Xcode 26.6); Android uses `sdk-57`. The iOS minimum is 16.4. This image meets [Apple’s current Xcode 26/iOS 26 SDK submission requirement](https://developer.apple.com/news/upcoming-requirements/?id=04282026a). Do not switch SDK 57 to an Xcode 27 image without following Expo's scene-lifecycle guidance and enabling its required config; the chosen Xcode 26.6 image avoids that separate migration.
 - [ ] Configure Apple Developer/App Store Connect and Google Play Console, signing credentials, App Store app record, Play application, and provisioning devices for internal iOS preview builds.
-- [ ] Run `npx eas-cli build --profile preview --platform all`; install on actual iOS/Android devices. Confirm sound, haptics, app lifecycle, touch targets, text scaling, screen-reader labels, keyboard, safe areas and background/resume behavior.
+- [ ] Run `npx eas-cli build --profile preview --platform ios` (and `--platform android` when configured); install on actual iOS/Android devices. Confirm sound, haptics, app lifecycle, touch targets, text scaling, screen-reader labels, keyboard, safe areas and background/resume behavior.
+- [ ] For Metro development, run `npx eas-cli build --profile development --platform ios`, install it and use `npx expo start --dev-client`. Preview embeds the bundle and does not need Metro.
 - [ ] Run the device checklist below, then production builds with `npx eas-cli build --profile production --platform all`. Distribute TestFlight/Play internal testing and collect user feedback before submitting.
 
 ## Device acceptance
@@ -45,3 +46,15 @@ Repository validation is documented in `VALIDATION.md`. This checklist covers ex
 - [ ] Complete TestFlight/Play feedback triage, crash checks and signed-build smoke tests before store submission.
 
 Development-ready means the repository installs, checks and bundles. Beta-ready additionally requires a deployed backend (if enabled), signed device-tested binaries and successful account integration tests. Store-submission-ready additionally requires current toolchain compliance, listings, privacy materials and developer-account credentials. This repository alone cannot supply those account/device steps.
+
+## Native project policy
+
+Use Expo Continuous Native Generation. `ios/` and `android/` are ignored and are generated by EAS/prebuild; do not commit them. Bundle/package identifiers remain absent until Zach reserves and enters the real values in `app.json`. `expo-dev-client` is installed for the development profile. No Apple team, Expo project, signing credentials or account-specific identifiers are assumed.
+
+After identifiers, Expo project linking, public environment values, Apple Developer authentication and iPhone UDID registration (`npx eas-cli device:create`), the preview command is:
+
+```sh
+npx eas-cli build --profile preview --platform ios
+```
+
+Allow EAS to configure the real signing/provisioning credentials interactively. Install the internal build link on a registered iPhone and enable Developer Mode if iOS requests it. Preview is ad hoc internal distribution; production is the separate store/TestFlight build. A Linux prebuild/export cannot certify Xcode compilation or device behavior.

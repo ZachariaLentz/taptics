@@ -27,6 +27,7 @@ function DailyAttempt() {
   const { id, today, stats, save } = usePlayer();
   const puzzle = useMemo(() => dailyPuzzle(id, today), [id, today]);
   const attempt = useRef<Completion | null>(null);
+  const [savedAttempt, setSavedAttempt] = useState<Completion | null>(null);
   const locked = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -54,6 +55,7 @@ function DailyAttempt() {
         selected: value,
         puzzle,
       };
+    setSavedAttempt(attempt.current);
     try {
       await save(attempt.current);
       sound.feedback(Boolean(attempt.current.correct));
@@ -102,7 +104,7 @@ function DailyAttempt() {
             <Button
               key={value}
               title={String(value)}
-              disabled={busy || attempt.current !== null}
+              disabled={busy || savedAttempt !== null}
               onPress={() => {
                 void submit(value);
               }}
@@ -116,11 +118,11 @@ function DailyAttempt() {
           {error && (
             <>
               <Feedback>{error}</Feedback>
-              {attempt.current && (
+              {savedAttempt && (
                 <Button
                   title="Retry saving this answer"
                   onPress={() => {
-                    void submit(attempt.current!.selected!);
+                    void submit(savedAttempt.selected!);
                   }}
                 />
               )}

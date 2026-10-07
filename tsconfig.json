@@ -15,22 +15,26 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-native",
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "app/*"
+        "./app/*"
       ],
       "@lib/*": [
-        "lib/*"
+        "./lib/*"
       ],
       "@assets/*": [
-        "assets/*"
+        "./assets/*"
       ]
-    }
+    },
+    "types": [
+      "jest",
+      "node",
+      "react"
+    ]
   },
   "exclude": [
     "node_modules",
