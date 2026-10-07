@@ -1,6 +1,7 @@
 import React from "react";
 import renderer, { act, ReactTestRenderer } from "react-test-renderer";
-import { Pressable, Text } from "react-native";
+import { Text } from "react-native";
+import { Button } from "../components/ui";
 import { GuestImportCard } from "../components/GuestImportCard";
 import { planGuestImport, queueGuestImport } from "../lib/guestImport";
 import { emptyData, PlayerData } from "../lib/storage";
@@ -40,8 +41,8 @@ const mockPlayer = {
 jest.mock("../lib/PlayerProvider", () => ({ usePlayer: () => mockPlayer }));
 const button = (tree: ReactTestRenderer, title: string) =>
   tree.root
-    .findAllByType(Pressable)
-    .find((node) => node.props.accessibilityLabel === title)!;
+    .findAllByType(Button)
+    .find((node) => node.props.title === title)!;
 beforeEach(() => {
   mockPlayer.data = emptyData();
   mockImport.mockClear();

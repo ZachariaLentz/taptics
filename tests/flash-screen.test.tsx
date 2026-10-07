@@ -1,6 +1,6 @@
 import React from "react";
 import renderer, { act, ReactTestRenderer } from "react-test-renderer";
-import { Pressable } from "react-native";
+import { Button } from "../components/ui";
 import FlashScreen from "../screens/FlashScreen";
 import ScoreScreen from "../screens/ScoreScreen";
 import { generatePuzzle } from "../lib/engine";
@@ -29,8 +29,8 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 const button = (tree: ReactTestRenderer, label: string) =>
   tree.root
-    .findAllByType(Pressable)
-    .find((node) => node.props.accessibilityLabel === label)!;
+    .findAllByType(Button)
+    .find((node) => node.props.title === label)!;
 beforeEach(() => {
   jest.useFakeTimers();
   mockSave.mockClear();

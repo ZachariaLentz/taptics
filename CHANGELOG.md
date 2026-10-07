@@ -1,5 +1,14 @@
 # 📦 Taptics Changelog
 
+## SDK 57 / native email auth — 2026-10-07
+
+- Incremental stable SDK upgrades through 53, 54, 55 and 56 to Expo 57.0.27 / React Native 0.86.3 / React 19.2.3; Expo-compatible native libraries, Worklets, dev client and direct audio/font peers.
+- Native PKCE email confirmation and password recovery at `taptics://auth/confirm` and `taptics://auth/recovery`, with cold/warm link handling, verified recovery intent, new-password form and logout/account-switch invalidation.
+- Public Supabase publishable-key naming; no backend schema changes. Existing completion/RPC/RLS/guest-import/offline guarantees retained.
+- Development, preview and production EAS profiles, Xcode 26.6 image, CNG policy and concrete Supabase/Expo/Apple setup instructions. No fabricated project, team or bundle IDs.
+- React 19 test renderer updates preserve gameplay assertions; callback, native crypto and session-change regressions added.
+
+
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 

@@ -106,7 +106,10 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 );
 let player!: ReturnType<typeof usePlayer>;
 function Probe() {
-  player = usePlayer();
+  const value = usePlayer();
+  React.useEffect(() => {
+    player = value;
+  });
   return null;
 }
 const date = new Date().toISOString().slice(0, 10);
@@ -369,4 +372,52 @@ test("failed local import persistence cannot upload rewards or destroy guest pro
   expect(mockRpc).not.toHaveBeenCalled();
   expect((await readPlayer("account")).events).toEqual([]);
   expect((await readPlayer("guest")).events).toEqual([training, daily]);
+});
+
+test("recovery and token refresh preserve account progress and consent; logout restores guest", async () => {
+  await mount();
+  let plan!: Awaited<ReturnType<typeof player.prepareGuestImport>>;
+  await act(async () => {
+    plan = await player.prepareGuestImport();
+  });
+  await act(async () => {
+    mockListener?.("PASSWORD_RECOVERY", { user: mockUser });
+    mockListener?.("TOKEN_REFRESHED", { user: mockUser });
+  });
+  expect(player.id).toBe("account");
+  expect(player.stats.xp).toBe(0);
+  expect(mockRpc).not.toHaveBeenCalled();
+  await act(async () => {
+    await player.importGuestProgress(plan);
+  });
+  expect(player.stats.xp).toBe(115);
+  await act(async () => {
+    mockUser = null;
+    mockListener?.("SIGNED_OUT", null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(player.id).toBe("guest");
+  expect(player.data.events).toEqual([training, daily]);
+  expect((await readPlayer("guest")).events).toEqual([training, daily]);
+});
+
+test("rapid auth switches cannot revive stale account progress or reviewed import", async () => {
+  await mount();
+  let plan!: Awaited<ReturnType<typeof player.prepareGuestImport>>;
+  await act(async () => {
+    plan = await player.prepareGuestImport();
+  });
+  await act(async () => {
+    mockUser = { id: "different-account", email: "different@example.com" };
+    mockListener?.("SIGNED_IN", { user: mockUser });
+    mockUser = null;
+    mockListener?.("SIGNED_OUT", null);
+    await expect(player.importGuestProgress(plan)).rejects.toThrow(
+      "Account changed",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(player.id).toBe("guest");
+  expect(mockRpc).not.toHaveBeenCalled();
+  expect(player.data.events).toEqual([training, daily]);
 });

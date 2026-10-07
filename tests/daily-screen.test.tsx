@@ -1,6 +1,6 @@
 import React from "react";
 import renderer, { act, ReactTestRenderer } from "react-test-renderer";
-import { Pressable } from "react-native";
+import { Button } from "../components/ui";
 import DailyScreen from "../screens/DailyScreen";
 import { Completion, dailyPuzzle } from "../lib/engine";
 const mockSave = jest.fn();
@@ -25,8 +25,8 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 const button = (tree: ReactTestRenderer, title: string) =>
   tree.root
-    .findAllByType(Pressable)
-    .find((node) => node.props.accessibilityLabel === title)!;
+    .findAllByType(Button)
+    .find((node) => node.props.title === title)!;
 beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date("2026-10-06T12:00:00Z"));
@@ -54,12 +54,12 @@ test("Daily accepts one selection and restored completion has no answer controls
   expect(mockSave).toHaveBeenCalledTimes(1);
   expect(mockFeedback).toHaveBeenCalledWith(true);
   act(() => tree.update(<DailyScreen />));
-  expect(tree.root.findAllByType(Pressable)).toHaveLength(0);
+  expect(tree.root.findAllByType(Button)).toHaveLength(0);
   act(() => tree.unmount());
   act(() => {
     tree = renderer.create(<DailyScreen />);
   });
-  expect(tree.root.findAllByType(Pressable)).toHaveLength(0);
+  expect(tree.root.findAllByType(Button)).toHaveLength(0);
   expect(mockSave).toHaveBeenCalledTimes(1);
   act(() => tree.unmount());
 });

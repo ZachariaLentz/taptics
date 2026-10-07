@@ -47,6 +47,7 @@ interface PlayerContext {
 const Context = createContext<PlayerContext | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [id, setId] = useState("");
+  const [deviceGuestId, setDeviceGuestId] = useState("");
   const [guestEvents, setGuestEvents] = useState<Completion[]>([]);
   const [user, setUser] = useState<Account | null>(null);
   const [data, setData] = useState<PlayerData>(emptyData);
@@ -58,6 +59,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const generation = useRef(0);
   const guestId = useRef("");
+  const authAccount = useRef<{ user: Account | null } | null>(null);
   const syncBusy = useRef(false);
   const retry = useCallback(async () => {
     const version = ++generation.current;
@@ -71,7 +73,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       }
       guestId.current = guest;
       let account: Account | null = null;
-      if (supabase) {
+      if (authAccount.current) account = authAccount.current.user;
+      else if (supabase) {
         try {
           const response = await withTimeout(supabase.auth.getSession(), 5000);
           if (response.error) throw response.error;
@@ -86,6 +89,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const guestSaved = await readPlayer(guestId.current);
       if (version !== generation.current) return;
       current.current = { id: playerId, data: saved };
+      setDeviceGuestId(guest);
       setGuestEvents(guestSaved.events);
       setId(playerId);
       setUser(account);
@@ -278,13 +282,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [mutate],
   );
   useEffect(() => {
-    void retry();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void retry();
+    });
+    return () => {
+      active = false;
+    };
   }, [retry]);
   useEffect(() => {
     const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
+      authAccount.current = { user: session?.user ?? null };
       // Stop old-account uploads immediately; defer storage work outside the auth callback's lock.
       const nextId = session?.user.id ?? guestId.current;
       if (nextId && nextId !== current.current.id) {
+        generation.current++;
         current.current.id = "";
         setReady(false);
         setTimeout(() => {
@@ -295,10 +307,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     return () => subscription?.data.subscription.unsubscribe();
   }, [retry]);
   useEffect(() => {
-    if (ready) void sync();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active && ready) void sync();
+    });
+    return () => {
+      active = false;
+    };
   }, [ready, sync]);
   useEffect(() => {
-    if (ready && !syncing && !error && data.pending.length > 0) void sync();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active && ready && !syncing && !error && data.pending.length > 0)
+        void sync();
+    });
+    return () => {
+      active = false;
+    };
   }, [ready, syncing, error, data.pending.length, sync]);
   useEffect(() => {
     if (supabase) supabase.auth.startAutoRefresh();
@@ -331,7 +356,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         retry,
         sync,
         guestEvents,
-        deviceGuestId: guestId.current,
+        deviceGuestId,
         prepareGuestImport,
         importGuestProgress,
       }}

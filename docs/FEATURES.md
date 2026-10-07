@@ -9,6 +9,7 @@
 | Streak          | Consecutive local activity dates from saved completions                                                             |
 | Progress        | Real completion counts, accuracy, XP, level, streak and recent activity                                             |
 | Profile         | Device guest copy, explicit account merge, email auth, sync/logout and account deletion                             |
+| Email auth      | Native PKCE confirmation and password recovery, same-device email links, account-switch recovery invalidation       |
 | Backend         | Versioned schema, private RLS reads, RPC-only atomic awards, unique Daily and session constraints                   |
 | Feedback        | Shared sound/haptic feedback, explicit text feedback and accessible buttons                                         |
 | Admin           | Removed from production routes; typed source configuration controls gameplay                                        |

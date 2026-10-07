@@ -13,10 +13,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx expo install --check
+      - run: npx expo-doctor
       - run: npm run typecheck
       - run: npm run lint
       - run: npx jest --runInBand
       - run: npm run test:database
       - run: npx expo export --platform web
+        env:
+          EXPO_NO_TELEMETRY: "1"
+      - run: npx expo export --platform ios --platform android
         env:
           EXPO_NO_TELEMETRY: "1"

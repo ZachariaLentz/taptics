@@ -10,6 +10,7 @@ import {
   Title,
 } from "../components/ui";
 import { supabase } from "../lib/supabase";
+import { CONFIRM_REDIRECT, RECOVERY_REDIRECT } from "../lib/authCallback";
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -36,7 +37,11 @@ export default function LoginScreen() {
               email: email.trim(),
               password,
             })
-          : await supabase.auth.signUp({ email: email.trim(), password });
+          : await supabase.auth.signUp({
+              email: email.trim(),
+              password,
+              options: { emailRedirectTo: CONFIRM_REDIRECT },
+            });
       if (response.error) throw response.error;
       if (response.data.session) router.replace("/profile");
       else
@@ -60,10 +65,13 @@ export default function LoginScreen() {
     locked.current = true;
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        { redirectTo: RECOVERY_REDIRECT },
+      );
       if (error) throw error;
       setMessage(
-        "If an account exists, a reset email is on its way. Follow the configured account recovery page.",
+        "If an account exists, a reset email is on its way. Open the link on this device to choose a new password in Taptics.",
       );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Reset request failed.");

@@ -4,7 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PlayerProvider, usePlayer } from "../lib/PlayerProvider";
 import { readPlayer, writePlayer } from "../lib/storage";
 import { Completion } from "../lib/engine";
-const mockRpc = jest.fn<Promise<unknown>, unknown[]>(() => new Promise(() => undefined));
+const mockRpc = jest.fn<Promise<unknown>, unknown[]>(
+  () => new Promise(() => undefined),
+);
 jest.mock("../lib/supabase", () => ({
   supabase: {
     auth: {
@@ -29,7 +31,10 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 );
 let player!: ReturnType<typeof usePlayer>;
 function Probe() {
-  player = usePlayer();
+  const value = usePlayer();
+  React.useEffect(() => {
+    player = value;
+  });
   return null;
 }
 test("a stalled cloud award never blocks durable local progress or loses a concurrent completion", async () => {
