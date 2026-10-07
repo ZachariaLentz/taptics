@@ -8,9 +8,11 @@
     "scheme": "taptics",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zacharialentz.taptics"
     },
     "android": {
+      "package": "com.zacharialentz.taptics",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
