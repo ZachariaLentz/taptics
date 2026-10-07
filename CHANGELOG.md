@@ -5,6 +5,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.0] - 2026-10-06
+
+### Changed
+- Added explicit reviewed guest-to-account completion import, durable retry/confirmation receipts, deterministic conflicts and unchanged guest restoration on logout.
+- Reconfirmed database ownership/write/idempotency guarantees with expanded regression tests.
+- Repaired guest/session boot and separated four user tabs from Flash/results/login.
+- Added deterministic progressive arithmetic, sequential Flash terms, ten-answer scoring and locked feedback.
+- Persisted Daily completion and completion-based XP/streak/history; added real Progress and account controls.
+- Added local-first storage, offline sync, canonical Supabase migrations/RLS and atomic idempotent awards.
+- Replaced deprecated audio playback, retained sound assets, added haptics and shared accessible controls.
+- Removed unfinished admin/demo routes, executable formulas, hardcoded deployment values and unused assets/dependencies.
+- Added game/UI/persistence/session/database tests, CI, accurate setup docs and release checklist.
+
 ## [0.3.0] - 2024-03-31
 ### Added
 - 🚀 Created `/docs/feature-tracking.ts` to track active feature versions

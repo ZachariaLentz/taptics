@@ -1,6 +1,29 @@
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = 'https://aozdpvlgmlwtlodhzite.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvemRwdmxnbWx3dGxvZGh6aXRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMzMTI2MzYsImV4cCI6MjA1ODg4ODYzNn0.oF-Gyi9KhgKNDABT2KOMIo71dIU543tHeRSJWY-tV8E';
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import "react-native-url-polyfill/auto";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AUTH_STORAGE_KEY } from "./session";
+import { createClient } from "@supabase/supabase-js";
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+export const supabase =
+  url && key
+    ? createClient(url, key, {
+        global: {
+          fetch: async (input, init) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            try {
+              return await fetch(input, { ...init, signal: controller.signal });
+            } finally {
+              clearTimeout(timer);
+            }
+          },
+        },
+        auth: {
+          storageKey: AUTH_STORAGE_KEY,
+          storage: AsyncStorage,
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+        },
+      })
+    : null;

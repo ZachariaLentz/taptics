@@ -1,1 +1,1 @@
-export { default } from '@/components/ProgressScreen';
+export { default } from "../../screens/ProgressScreen";

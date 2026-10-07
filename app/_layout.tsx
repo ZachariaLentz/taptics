@@ -1,39 +1,32 @@
-import { Slot } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { supabase } from '@lib/supabase';
-import { useRouter } from 'expo-router';
-
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PlayerProvider } from "../lib/PlayerProvider";
+import { BootGate, colors } from "../components/ui";
 export default function RootLayout() {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-
-      if (data?.is_admin) {
-        router.replace('./(admin)');
-        setIsAdmin(true);
-      } else {
-        router.replace('./(tabs)');
-        setIsAdmin(false);
-      }
-    };
-
-    checkRole();
-  }, []);
-
-  if (isAdmin === null) return null;
-
-  return <Slot />;
+  return (
+    <SafeAreaProvider>
+      <PlayerProvider>
+        <StatusBar style="dark" />
+        <BootGate>
+          <Stack
+            screenOptions={{
+              headerTintColor: colors.ink,
+              headerStyle: { backgroundColor: colors.background },
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="flash" options={{ title: "Flash Training" }} />
+            <Stack.Screen
+              name="score"
+              options={{ title: "Workout complete", headerBackVisible: false }}
+            />
+            <Stack.Screen name="login" options={{ title: "Your account" }} />
+          </Stack>
+        </BootGate>
+      </PlayerProvider>
+    </SafeAreaProvider>
+  );
 }
